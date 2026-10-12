@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "guid": "b81c7bf8-d623-4aeb-a456-44f5f12a4ca3",
+    "versions": [
+      {
+        "version": "0.1.0.0",
+        "changelog": "Phase 1: actors in the current scene.",
+        "targetAbi": "12.2.0.0",
+        "sourceUrl": "https://github.com/de-Bat/jellyfin-plugin-xray/releases/download/v0.1.0.0/xray_0.1.0.0.zip",
+        "checksum": "e256c9d05c4815c43d29ffce16bbc279",
+        "timestamp": "2026-10-12T23:48:49Z"
+      }
+    ],
+    "name": "X-Ray",
+    "overview": "Prime Video style X-Ray: see which actors are in the current scene",
+    "description": "Recognizes cast members in your videos with on-device face recognition and shows who is on screen while you watch.",
+    "owner": "de-Bat",
+    "category": "General",
+    "imageUrl": ""
+  }
+]
