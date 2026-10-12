@@ -1,0 +1,23 @@
+name: "X-Ray"
+guid: "b81c7bf8-d623-4aeb-a456-44f5f12a4ca3"
+version: "0.1.0.0"
+targetAbi: "12.2.0.0"
+framework: "net10.0"
+owner: "de-Bat"
+overview: "Prime Video style X-Ray: see which actors are in the current scene"
+description: >
+  Recognizes cast members in your videos with on-device face recognition and shows
+  who is on screen while you watch.
+category: "General"
+artifacts:
+  - "Jellyfin.Plugin.XRay.dll"
+  - "FaceAiSharp.dll"
+  - "Microsoft.ML.OnnxRuntime.dll"
+  - "SixLabors.ImageSharp.dll"
+  - "SixLabors.ImageSharp.Drawing.dll"
+  - "SixLabors.Fonts.dll"
+  - "MathNet.Numerics.dll"
+  - "SimpleSIMD.dll"
+  - "CommunityToolkit.Diagnostics.dll"
+  - "System.Numerics.Tensors.dll"
+changelog: "Phase 1: actors in the current scene."

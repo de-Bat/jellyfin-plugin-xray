@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>X-Ray</title>
+</head>
+<body>
+    <div id="XRayConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="XRayConfigForm">
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">X-Ray</h2>
+                        <p>
+                            Recognizes cast members in your videos so you can see who is in the current scene while watching
+                            (pause, show the player controls, or press <b>X</b>). Scene data is built by the
+                            <b>Build X-Ray scene data</b> scheduled task, or on demand from the player.
+                            The first analysis downloads the ONNX runtime and face models (~90 MB) from NuGet.
+                        </p>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">What to analyze</h3>
+                        <div class="checkboxContainer">
+                            <label><input is="emby-checkbox" type="checkbox" id="AnalyzeMovies" /><span>Movies</span></label>
+                        </div>
+                        <div class="checkboxContainer">
+                            <label><input is="emby-checkbox" type="checkbox" id="AnalyzeEpisodes" /><span>Episodes</span></label>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MaxCastMembers" min="1" max="200" label="Cast members to look for (by billing order)" />
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Recognition</h3>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="SampleIntervalSeconds" min="0.25" max="30" step="0.25" label="Seconds between analyzed frames" />
+                            <div class="fieldDescription">Lower is more precise but slower.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="FrameWidth" min="320" max="3840" step="1" label="Frame width for analysis (px)" />
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MinFaceSize" min="12" max="400" step="1" label="Minimum face height (px)" />
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MatchThreshold" min="0.1" max="0.95" step="0.01" label="Match threshold (cosine similarity)" />
+                            <div class="fieldDescription">Higher means fewer false matches but more missed faces. 0.35 - 0.5 works well.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MatchMargin" min="0" max="0.5" step="0.01" label="Required lead over second-best actor" />
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MergeGapSeconds" min="0" max="120" step="1" label="Merge sightings closer than (seconds)" />
+                            <div class="fieldDescription">Bridges cut-aways and over-the-shoulder shots within a scene.</div>
+                        </div>
+                    </div>
+
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Web client</h3>
+                        <div class="checkboxContainer">
+                            <label><input is="emby-checkbox" type="checkbox" id="InjectClientScript" /><span>Add the X-Ray overlay to the Jellyfin web client</span></label>
+                            <div class="fieldDescription">
+                                Edits jellyfin-web's index.html. If the server cannot write it, load
+                                <code>/XRay/ClientScript</code> with a script injector plugin instead.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button"><span>Save</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var XRayConfig = {
+                pluginUniqueId: 'b81c7bf8-d623-4aeb-a456-44f5f12a4ca3',
+                checkboxes: ['AnalyzeMovies', 'AnalyzeEpisodes', 'InjectClientScript'],
+                numbers: ['MaxCastMembers', 'SampleIntervalSeconds', 'FrameWidth', 'MinFaceSize', 'MatchThreshold', 'MatchMargin', 'MergeGapSeconds']
+            };
+
+            document.querySelector('#XRayConfigPage').addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(XRayConfig.pluginUniqueId).then(function (config) {
+                    XRayConfig.checkboxes.forEach(function (id) {
+                        document.getElementById(id).checked = !!config[id];
+                    });
+                    XRayConfig.numbers.forEach(function (id) {
+                        document.getElementById(id).value = config[id];
+                    });
+                    Dashboard.hideLoadingMsg();
+                });
+            });
+
+            document.querySelector('#XRayConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(XRayConfig.pluginUniqueId).then(function (config) {
+                    XRayConfig.checkboxes.forEach(function (id) {
+                        config[id] = document.getElementById(id).checked;
+                    });
+                    XRayConfig.numbers.forEach(function (id) {
+                        config[id] = parseFloat(document.getElementById(id).value);
+                    });
+                    ApiClient.updatePluginConfiguration(XRayConfig.pluginUniqueId, config).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                });
+                return false;
+            });
+        </script>
+    </div>
+</body>
+</html>
