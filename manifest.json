@@ -3,6 +3,14 @@
     "guid": "b81c7bf8-d623-4aeb-a456-44f5f12a4ca3",
     "versions": [
       {
+        "version": "0.2.1.0",
+        "changelog": "Web overlay now works on read-only installs (official Docker image): the script tag is added when index.html is served.",
+        "targetAbi": "12.2.0.0",
+        "sourceUrl": "https://github.com/de-Bat/jellyfin-plugin-xray/releases/download/v0.2.1.0/xray_0.2.1.0.zip",
+        "checksum": "42468b768e0bf18f9476c5244a8273dd",
+        "timestamp": "2026-10-13T05:31:42Z"
+      },
+      {
         "version": "0.2.0.0",
         "changelog": "Analyze specific folders (setting and POST /XRay/Folders/Analyze); dedicated xray_yyyyMMdd.log file in Jellyfin's log folder.",
         "targetAbi": "12.2.0.0",
