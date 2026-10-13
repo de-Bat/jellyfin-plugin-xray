@@ -6,6 +6,7 @@ using Jellyfin.Plugin.XRay.Web;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.XRay;
@@ -25,5 +26,6 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<AnalysisQueue>();
         serviceCollection.AddHostedService(sp => sp.GetRequiredService<AnalysisQueue>());
         serviceCollection.AddHostedService<WebInjector>();
+        serviceCollection.AddTransient<IStartupFilter, IndexHtmlStartupFilter>();
     }
 }
