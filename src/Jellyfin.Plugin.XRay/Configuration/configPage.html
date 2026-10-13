@@ -5,7 +5,7 @@
     <title>X-Ray</title>
 </head>
 <body>
-    <div id="XRayConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox">
+    <div id="XRayConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-checkbox,emby-textarea">
         <div data-role="content">
             <div class="content-primary">
                 <form id="XRayConfigForm">
@@ -26,6 +26,13 @@
                         </div>
                         <div class="checkboxContainer">
                             <label><input is="emby-checkbox" type="checkbox" id="AnalyzeEpisodes" /><span>Episodes</span></label>
+                        </div>
+                        <div class="inputContainer">
+                            <textarea is="emby-textarea" id="AnalyzeFolders" rows="3" label="Only these folders (one path per line)"></textarea>
+                            <div class="fieldDescription">
+                                Limits the scheduled task to videos in these folders and their subfolders. Leave empty for
+                                all libraries. Use paths as the server sees them, e.g. <code>/media/movies/Marvel</code>.
+                            </div>
                         </div>
                         <div class="inputContainer">
                             <input is="emby-input" type="number" id="MaxCastMembers" min="1" max="200" label="Cast members to look for (by billing order)" />
@@ -68,6 +75,17 @@
                         </div>
                     </div>
 
+                    <div class="verticalSection">
+                        <h3 class="sectionTitle">Logging</h3>
+                        <div class="checkboxContainer">
+                            <label><input is="emby-checkbox" type="checkbox" id="WriteLogFile" /><span>Write a dedicated X-Ray log file</span></label>
+                            <div class="fieldDescription">
+                                <code>xray_yyyyMMdd.log</code> in Jellyfin's log folder (Dashboard &rarr; Logs), including debug
+                                messages. The last 7 days are kept.
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button"><span>Save</span></button>
                     </div>
@@ -77,7 +95,8 @@
         <script type="text/javascript">
             var XRayConfig = {
                 pluginUniqueId: 'b81c7bf8-d623-4aeb-a456-44f5f12a4ca3',
-                checkboxes: ['AnalyzeMovies', 'AnalyzeEpisodes', 'InjectClientScript'],
+                checkboxes: ['AnalyzeMovies', 'AnalyzeEpisodes', 'InjectClientScript', 'WriteLogFile'],
+                texts: ['AnalyzeFolders'],
                 numbers: ['MaxCastMembers', 'SampleIntervalSeconds', 'FrameWidth', 'MinFaceSize', 'MatchThreshold', 'MatchMargin', 'MergeGapSeconds']
             };
 
@@ -89,6 +108,9 @@
                     });
                     XRayConfig.numbers.forEach(function (id) {
                         document.getElementById(id).value = config[id];
+                    });
+                    XRayConfig.texts.forEach(function (id) {
+                        document.getElementById(id).value = config[id] || '';
                     });
                     Dashboard.hideLoadingMsg();
                 });
@@ -103,6 +125,9 @@
                     });
                     XRayConfig.numbers.forEach(function (id) {
                         config[id] = parseFloat(document.getElementById(id).value);
+                    });
+                    XRayConfig.texts.forEach(function (id) {
+                        config[id] = document.getElementById(id).value;
                     });
                     ApiClient.updatePluginConfiguration(XRayConfig.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

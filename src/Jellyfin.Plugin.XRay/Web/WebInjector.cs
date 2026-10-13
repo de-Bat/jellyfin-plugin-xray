@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Jellyfin.Plugin.XRay.Logging;
 using MediaBrowser.Common.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,17 +14,18 @@ public sealed partial class WebInjector : IHostedService
     private const string Marker = "data-xray-plugin";
 
     private readonly IApplicationPaths _paths;
-    private readonly ILogger<WebInjector> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WebInjector"/> class.
     /// </summary>
     /// <param name="paths">Application paths.</param>
     /// <param name="logger">Logger.</param>
-    public WebInjector(IApplicationPaths paths, ILogger<WebInjector> logger)
+    /// <param name="logFile">X-Ray log file.</param>
+    public WebInjector(IApplicationPaths paths, ILogger<WebInjector> logger, XRayLogFile logFile)
     {
         _paths = paths;
-        _logger = logger;
+        _logger = logFile.Wrap(logger);
     }
 
     /// <summary>

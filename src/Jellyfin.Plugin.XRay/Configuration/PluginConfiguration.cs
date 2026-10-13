@@ -53,6 +53,17 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool AnalyzeEpisodes { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the folders the scheduled task is limited to, one path per line. Empty means all libraries.
+    /// </summary>
+    public string AnalyzeFolders { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether X-Ray also writes its messages to a dedicated log file
+    /// (<c>xray_yyyyMMdd.log</c> in Jellyfin's log folder).
+    /// </summary>
+    public bool WriteLogFile { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the client script is injected into jellyfin-web's index.html.
     /// </summary>
     public bool InjectClientScript { get; set; } = true;

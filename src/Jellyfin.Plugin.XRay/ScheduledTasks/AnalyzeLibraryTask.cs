@@ -1,36 +1,29 @@
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.XRay.Analysis;
-using Jellyfin.Plugin.XRay.Storage;
-using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Library;
+using Jellyfin.Plugin.XRay.Logging;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.XRay.ScheduledTasks;
 
 /// <summary>
-/// Builds X-Ray timelines for every movie/episode that does not have one yet.
+/// Builds X-Ray timelines for every movie/episode (in the configured folders) that does not have one yet.
 /// </summary>
 public class AnalyzeLibraryTask : IScheduledTask
 {
-    private readonly ILibraryManager _libraryManager;
     private readonly XRayAnalyzer _analyzer;
-    private readonly TimelineStore _store;
-    private readonly ILogger<AnalyzeLibraryTask> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AnalyzeLibraryTask"/> class.
     /// </summary>
-    /// <param name="libraryManager">Library manager.</param>
     /// <param name="analyzer">Analyzer.</param>
-    /// <param name="store">Timeline store.</param>
     /// <param name="logger">Logger.</param>
-    public AnalyzeLibraryTask(ILibraryManager libraryManager, XRayAnalyzer analyzer, TimelineStore store, ILogger<AnalyzeLibraryTask> logger)
+    /// <param name="logFile">X-Ray log file.</param>
+    public AnalyzeLibraryTask(XRayAnalyzer analyzer, ILogger<AnalyzeLibraryTask> logger, XRayLogFile logFile)
     {
-        _libraryManager = libraryManager;
         _analyzer = analyzer;
-        _store = store;
-        _logger = logger;
+        _logger = logFile.Wrap(logger);
     }
 
     /// <inheritdoc />
@@ -60,21 +53,18 @@ public class AnalyzeLibraryTask : IScheduledTask
             kinds.Add(BaseItemKind.Episode);
         }
 
-        if (kinds.Count == 0)
+        var folders = FolderFilter.Parse(config.AnalyzeFolders);
+        var items = _analyzer.FindItems(kinds, folders, includeAnalyzed: false);
+
+        if (folders.Count > 0)
         {
-            return;
+            _logger.LogInformation("X-Ray: {Count} items to analyze in {Folders}", items.Count, string.Join(", ", folders));
+        }
+        else
+        {
+            _logger.LogInformation("X-Ray: {Count} items to analyze", items.Count);
         }
 
-        var items = _libraryManager.GetItemList(new InternalItemsQuery
-            {
-                IncludeItemTypes = [.. kinds],
-                IsVirtualItem = false,
-                Recursive = true,
-            })
-            .Where(i => XRayAnalyzer.CanAnalyze(i) && !_store.Exists(i.Id) && _analyzer.GetCast(i, 1).Count > 0)
-            .ToList();
-
-        _logger.LogInformation("X-Ray: {Count} items to analyze", items.Count);
         try
         {
             for (var i = 0; i < items.Count; i++)
@@ -82,6 +72,7 @@ public class AnalyzeLibraryTask : IScheduledTask
                 cancellationToken.ThrowIfCancellationRequested();
                 var index = i;
                 var itemProgress = new Progress<double>(p => progress.Report((index + (p / 100)) / items.Count * 100));
+                _logger.LogInformation("X-Ray: analyzing {Name} ({Path})", items[i].Name, items[i].Path);
                 try
                 {
                     await _analyzer.AnalyzeAsync(items[i].Id, itemProgress, cancellationToken).ConfigureAwait(false);

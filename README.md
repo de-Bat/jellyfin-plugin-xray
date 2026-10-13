@@ -68,6 +68,7 @@ press any button to bring up the controls, and the cast on screen appears top-le
 | GET | `/XRay/Items/{itemId}` | user | Cast, appearances, and analysis status |
 | GET | `/XRay/Items/{itemId}/Scene?positionTicks=` | user | Person ids on screen at a position |
 | POST | `/XRay/Items/{itemId}/Analyze` | admin | Queue face analysis |
+| POST | `/XRay/Folders/Analyze?path=&overwrite=` | admin | Queue every movie/episode in a folder (and subfolders); `overwrite=true` redoes analyzed ones |
 | POST | `/XRay/Items/{itemId}/Timeline` | admin | Replace with manual data: `[{PersonId, StartTicks, EndTicks}]` |
 | DELETE | `/XRay/Items/{itemId}/Timeline` | admin | Remove data |
 | GET | `/XRay/ClientScript` | none | Web client script |
@@ -76,6 +77,13 @@ press any button to bring up the controls, and the cast on screen appears top-le
 
 Dashboard → Plugins → X-Ray: sample interval, frame width, minimum face size, match threshold (default
 0.40) and margin, merge gap, cast size, which item types the task covers, and web injection.
+
+**Specific folders**: put one path per line in *Only these folders* to limit the scheduled task to those
+folders and their subfolders (paths as the server sees them). To analyze one folder right away, call
+`POST /XRay/Folders/Analyze?path=/media/movies/Marvel` with an admin API key.
+
+**Log file**: X-Ray writes its own `xray_yyyyMMdd.log` (including debug messages) to Jellyfin's log folder,
+so it also appears under Dashboard → Logs. The last 7 days are kept; turn it off under *Logging*.
 
 ## Notes
 
