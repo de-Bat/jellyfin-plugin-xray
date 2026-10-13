@@ -44,7 +44,7 @@ or build it:
 dotnet publish src/Jellyfin.Plugin.XRay -c Release -o publish
 ```
 
-Copy the `*.dll` files from `publish/` into `<jellyfin data>/plugins/XRay_0.1.0.0/` and restart Jellyfin.
+Copy the `*.dll` files from `publish/` into `<jellyfin data>/plugins/XRay_0.2.0.0/` and restart Jellyfin.
 This build targets Jellyfin **12.2** (net10.0).
 
 ### Web client

@@ -1,6 +1,6 @@
 name: "X-Ray"
 guid: "b81c7bf8-d623-4aeb-a456-44f5f12a4ca3"
-version: "0.1.0.0"
+version: "0.2.0.0"
 targetAbi: "12.2.0.0"
 framework: "net10.0"
 owner: "de-Bat"
@@ -20,4 +20,4 @@ artifacts:
   - "SimpleSIMD.dll"
   - "CommunityToolkit.Diagnostics.dll"
   - "System.Numerics.Tensors.dll"
-changelog: "Phase 1: actors in the current scene."
+changelog: "Analyze specific folders (setting and POST /XRay/Folders/Analyze); dedicated xray_yyyyMMdd.log file in Jellyfin's log folder."
