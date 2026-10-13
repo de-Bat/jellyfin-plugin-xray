@@ -44,14 +44,15 @@ or build it:
 dotnet publish src/Jellyfin.Plugin.XRay -c Release -o publish
 ```
 
-Copy the `*.dll` files from `publish/` into `<jellyfin data>/plugins/XRay_0.2.0.0/` and restart Jellyfin.
+Copy the `*.dll` files from `publish/` into `<jellyfin data>/plugins/XRay_0.2.1.0/` and restart Jellyfin.
 This build targets Jellyfin **12.2** (net10.0).
 
 ### Web client
 
-The plugin adds `<script data-xray-plugin src="../XRay/ClientScript">` to jellyfin-web's `index.html` at
-startup, and removes it when you turn off the option. If Jellyfin cannot write that file (for example in
-read-only Docker images), load `/XRay/ClientScript` with a script-injector plugin instead.
+The plugin adds `<script data-xray-plugin src="../XRay/ClientScript">` to jellyfin-web's `index.html` as
+Jellyfin serves the page, and leaves it out when you turn off the option. The file on disk is not changed, so
+this also works with read-only installs such as the official Docker image. (It also edits the file when it
+can, for setups where a reverse proxy serves jellyfin-web directly.)
 
 ### Android TV
 

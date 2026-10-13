@@ -92,11 +92,11 @@ public sealed partial class WebInjector : IHostedService
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
-            _logger.LogWarning(
-                "X-Ray: cannot write {Path} ({Message}). Add this tag yourself, e.g. with the JavaScript Injector plugin: {Script}",
+            // Not a problem: IndexHtmlMiddleware adds the tag when Jellyfin serves the page.
+            _logger.LogDebug(
+                "X-Ray: {Path} is read-only ({Message}); the script tag is added when the page is served instead",
                 path,
-                ex.Message,
-                ScriptTag);
+                ex.Message);
         }
     }
 
