@@ -53,6 +53,14 @@ The plugin adds `<script data-xray-plugin src="../XRay/ClientScript">` to jellyf
 startup, and removes it when you turn off the option. If Jellyfin cannot write that file (for example in
 read-only Docker images), load `/XRay/ClientScript` with a script-injector plugin instead.
 
+### Android TV
+
+The official Android TV app is native, so plugins can't add to it. A fork with an X-Ray panel built into
+both of its video players lives at
+[de-Bat/jellyfin-androidtv](https://github.com/de-Bat/jellyfin-androidtv/tree/xray) (branch `xray`).
+Sideload the APK from its [releases](https://github.com/de-Bat/jellyfin-androidtv/releases). Pause, or
+press any button to bring up the controls, and the cast on screen appears top-left.
+
 ## API
 
 | Method | Path | Auth | Purpose |
