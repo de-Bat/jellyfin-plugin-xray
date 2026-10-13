@@ -1,12 +1,15 @@
 using System.Net.Mime;
 using System.Reflection;
+using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.XRay.Analysis;
+using Jellyfin.Plugin.XRay.Logging;
 using Jellyfin.Plugin.XRay.Model;
 using Jellyfin.Plugin.XRay.Storage;
 using MediaBrowser.Controller.Library;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.XRay.Api;
 
@@ -21,6 +24,7 @@ public class XRayController : ControllerBase
     private readonly TimelineStore _store;
     private readonly AnalysisQueue _queue;
     private readonly XRayAnalyzer _analyzer;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="XRayController"/> class.
@@ -29,12 +33,21 @@ public class XRayController : ControllerBase
     /// <param name="store">Timeline store.</param>
     /// <param name="queue">Analysis queue.</param>
     /// <param name="analyzer">Analyzer.</param>
-    public XRayController(ILibraryManager libraryManager, TimelineStore store, AnalysisQueue queue, XRayAnalyzer analyzer)
+    /// <param name="logger">Logger.</param>
+    /// <param name="logFile">X-Ray log file.</param>
+    public XRayController(
+        ILibraryManager libraryManager,
+        TimelineStore store,
+        AnalysisQueue queue,
+        XRayAnalyzer analyzer,
+        ILogger<XRayController> logger,
+        XRayLogFile logFile)
     {
         _libraryManager = libraryManager;
         _store = store;
         _queue = queue;
         _analyzer = analyzer;
+        _logger = logFile.Wrap(logger);
     }
 
     /// <summary>
@@ -108,6 +121,33 @@ public class XRayController : ControllerBase
         }
 
         return Accepted(_queue.Enqueue(itemId));
+    }
+
+    /// <summary>
+    /// Queues face analysis of every movie and episode in a folder (and its subfolders).
+    /// </summary>
+    /// <param name="path">Folder path as seen by the server.</param>
+    /// <param name="overwrite">Whether items that already have scene data are analyzed again.</param>
+    /// <returns>The queued items.</returns>
+    [HttpPost("Folders/Analyze")]
+    [Authorize(Policy = "RequiresElevation")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<XRayFolderAnalysisDto> AnalyzeFolder([FromQuery] string path, [FromQuery] bool overwrite = false)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return BadRequest("A folder path is required.");
+        }
+
+        var items = _analyzer.FindItems([BaseItemKind.Movie, BaseItemKind.Episode], [path], overwrite);
+        foreach (var item in items)
+        {
+            _queue.Enqueue(item.Id);
+        }
+
+        _logger.LogInformation("X-Ray: queued {Count} items in {Path}", items.Count, path);
+        return Accepted(new XRayFolderAnalysisDto(path, items.Select(i => i.Id).ToList()));
     }
 
     /// <summary>
@@ -186,6 +226,13 @@ public record XRayItemDto(
     IReadOnlyList<XRayPersonDto> People,
     IReadOnlyList<XRayAppearanceDto> Appearances,
     AnalysisStatus? Analysis);
+
+/// <summary>
+/// Items queued by a folder analysis.
+/// </summary>
+/// <param name="Path">Folder.</param>
+/// <param name="ItemIds">Queued item ids.</param>
+public record XRayFolderAnalysisDto(string Path, IReadOnlyList<Guid> ItemIds);
 
 /// <summary>
 /// A cast member.

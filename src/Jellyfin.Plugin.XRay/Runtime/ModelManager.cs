@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Jellyfin.Plugin.XRay.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 
@@ -25,7 +26,7 @@ public sealed class ModelManager
     private static bool _resolverInstalled;
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<ModelManager> _logger;
+    private readonly ILogger _logger;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private bool _ready;
 
@@ -34,10 +35,11 @@ public sealed class ModelManager
     /// </summary>
     /// <param name="httpClientFactory">HTTP client factory.</param>
     /// <param name="logger">Logger.</param>
-    public ModelManager(IHttpClientFactory httpClientFactory, ILogger<ModelManager> logger)
+    /// <param name="logFile">X-Ray log file.</param>
+    public ModelManager(IHttpClientFactory httpClientFactory, ILogger<ModelManager> logger, XRayLogFile logFile)
     {
         _httpClientFactory = httpClientFactory;
-        _logger = logger;
+        _logger = logFile.Wrap(logger);
     }
 
     /// <summary>

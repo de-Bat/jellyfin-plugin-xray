@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.XRay.Configuration;
+using Jellyfin.Plugin.XRay.Logging;
 using Jellyfin.Plugin.XRay.Model;
 using Jellyfin.Plugin.XRay.Runtime;
 using Jellyfin.Plugin.XRay.Storage;
@@ -27,7 +28,7 @@ public sealed class XRayAnalyzer : IDisposable
     private readonly ModelManager _modelManager;
     private readonly TimelineStore _store;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<XRayAnalyzer> _logger;
+    private readonly ILogger _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private FaceEngine? _engine;
 
@@ -40,20 +41,22 @@ public sealed class XRayAnalyzer : IDisposable
     /// <param name="store">Timeline store.</param>
     /// <param name="httpClientFactory">HTTP client factory.</param>
     /// <param name="logger">Logger.</param>
+    /// <param name="logFile">X-Ray log file.</param>
     public XRayAnalyzer(
         ILibraryManager libraryManager,
         IMediaEncoder mediaEncoder,
         ModelManager modelManager,
         TimelineStore store,
         IHttpClientFactory httpClientFactory,
-        ILogger<XRayAnalyzer> logger)
+        ILogger<XRayAnalyzer> logger,
+        XRayLogFile logFile)
     {
         _libraryManager = libraryManager;
         _mediaEncoder = mediaEncoder;
         _modelManager = modelManager;
         _store = store;
         _httpClientFactory = httpClientFactory;
-        _logger = logger;
+        _logger = logFile.Wrap(logger);
     }
 
     private static string FaceCacheDirectory => Path.Combine(Plugin.Instance!.DataFolderPath, "faces");
@@ -65,6 +68,33 @@ public sealed class XRayAnalyzer : IDisposable
     /// <returns>True for plain video files.</returns>
     public static bool CanAnalyze(BaseItem? item)
         => item is Video { VideoType: VideoType.VideoFile } video && !string.IsNullOrEmpty(video.Path) && item is not Trailer;
+
+    /// <summary>
+    /// Finds the items that can be analyzed: plain video files with at least one cast member.
+    /// </summary>
+    /// <param name="kinds">Item types to include.</param>
+    /// <param name="folders">Folders to limit the search to; empty means all libraries.</param>
+    /// <param name="includeAnalyzed">Whether items that already have scene data are included.</param>
+    /// <returns>Items.</returns>
+    public IReadOnlyList<BaseItem> FindItems(IReadOnlyList<BaseItemKind> kinds, IReadOnlyList<string> folders, bool includeAnalyzed)
+    {
+        if (kinds.Count == 0)
+        {
+            return [];
+        }
+
+        return _libraryManager.GetItemList(new InternalItemsQuery
+            {
+                IncludeItemTypes = [.. kinds],
+                IsVirtualItem = false,
+                Recursive = true,
+            })
+            .Where(i => CanAnalyze(i)
+                && FolderFilter.Includes(folders, i.Path)
+                && (includeAnalyzed || !_store.Exists(i.Id))
+                && GetCast(i, 1).Count > 0)
+            .ToList();
+    }
 
     /// <summary>
     /// Gets the cast members considered for recognition, in billing order.

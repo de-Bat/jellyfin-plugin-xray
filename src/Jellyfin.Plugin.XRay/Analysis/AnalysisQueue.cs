@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using Jellyfin.Plugin.XRay.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -34,17 +35,18 @@ public sealed class AnalysisQueue : BackgroundService
     private readonly Channel<Guid> _channel = Channel.CreateUnbounded<Guid>();
     private readonly ConcurrentDictionary<Guid, AnalysisStatus> _status = new();
     private readonly XRayAnalyzer _analyzer;
-    private readonly ILogger<AnalysisQueue> _logger;
+    private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AnalysisQueue"/> class.
     /// </summary>
     /// <param name="analyzer">Analyzer.</param>
     /// <param name="logger">Logger.</param>
-    public AnalysisQueue(XRayAnalyzer analyzer, ILogger<AnalysisQueue> logger)
+    /// <param name="logFile">X-Ray log file.</param>
+    public AnalysisQueue(XRayAnalyzer analyzer, ILogger<AnalysisQueue> logger, XRayLogFile logFile)
     {
         _analyzer = analyzer;
-        _logger = logger;
+        _logger = logFile.Wrap(logger);
     }
 
     /// <summary>
